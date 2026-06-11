@@ -4,7 +4,7 @@ import streamlit as st
 # =============================
 # CONFIG
 # =============================
-API_BASE = "https://movie-rec-466x.onrender.com" or "http://127.0.0.1:8000"
+API_BASE = "https://movie-rec-466x.onrender.com"
 TMDB_IMG = "https://image.tmdb.org/t/p/w500"
 
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
@@ -15,15 +15,49 @@ st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wid
 st.markdown(
     """
 <style>
-.block-container { padding-top: 1rem; padding-bottom: 2rem; max-width: 1400px; }
-.small-muted { color:#6b7280; font-size: 0.92rem; }
-.movie-title { font-size: 0.9rem; line-height: 1.15rem; height: 2.3rem; overflow: hidden; }
-.card { border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; padding: 14px; background: rgba(255,255,255,0.7); }
+
+.block-container{
+    padding-top:1rem;
+    padding-bottom:2rem;
+    max-width:1500px;
+}
+
+.small-muted{
+    color:#9ca3af;
+    font-size:0.95rem;
+}
+
+.movie-title{
+    font-size:15px;
+    font-weight:600;
+    text-align:center;
+    min-height:50px;
+    margin-top:10px;
+}
+
+.card{
+    border-radius:16px;
+    padding:16px;
+    background:#111827;
+}
+
+img{
+    border-radius:14px;
+}
+
+[data-testid="stSidebar"]{
+    width:280px;
+}
+
+.stButton button{
+    width:100%;
+    border-radius:10px;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
 )
-
 # =============================
 # STATE + ROUTING (single-file pages)
 # =============================
@@ -95,17 +129,23 @@ def poster_grid(cards, cols=6, key_prefix="grid"):
 
             with colset[c]:
                 if poster:
-                    st.image(poster, use_column_width=True)
+                    st.image(
+                        poster
+                    )
                 else:
                     st.write("🖼️ No poster")
 
-                if st.button("Open", key=f"{key_prefix}_{r}_{c}_{idx}_{tmdb_id}"):
-                    if tmdb_id:
-                        goto_details(tmdb_id)
-
                 st.markdown(
-                    f"<div class='movie-title'>{title}</div>", unsafe_allow_html=True
+                    f"<div class='movie-title'>{title}</div>",
+                    unsafe_allow_html=True
                 )
+
+                if st.button(
+                    "🎬 Details",
+                    key=f"{key_prefix}_{r}_{c}_{idx}_{tmdb_id}",
+                    use_container_width=True
+                ):
+                    goto_details(tmdb_id)
 
 
 def to_cards_from_tfidf_items(tfidf_items):
@@ -213,12 +253,16 @@ with st.sidebar:
         ["trending", "popular", "top_rated", "now_playing", "upcoming"],
         index=0,
     )
-    grid_cols = st.slider("Grid columns", 4, 8, 6)
+    grid_cols = st.slider("Grid columns", 3, 5, 4)
 
 # =============================
 # HEADER
 # =============================
-st.title("🎬 Movie Recommender")
+st.markdown("""
+# 🎬 CineMatch
+
+Discover trending movies and get intelligent recommendations.
+""")
 st.markdown(
     "<div class='small-muted'>Type keyword → dropdown suggestions + matching results → open → details + recommendations</div>",
     unsafe_allow_html=True,
@@ -267,7 +311,9 @@ if st.session_state.view == "home":
         st.stop()
 
     # HOME FEED MODE
-    st.markdown(f"### 🏠 Home — {home_category.replace('_',' ').title()}")
+    st.markdown(
+    f"## 🍿 {home_category.replace('_',' ').title()} Movies"
+    )
 
     home_cards, err = api_get_json(
         "/home", params={"category": home_category, "limit": 24}
@@ -304,12 +350,12 @@ elif st.session_state.view == "details":
         st.stop()
 
     # Layout: Poster LEFT, Details RIGHT
-    left, right = st.columns([1, 2.4], gap="large")
+    left, right = st.columns([1, 3], gap="large")
 
     with left:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         if data.get("poster_url"):
-            st.image(data["poster_url"], use_column_width=True)
+            st.image(data["poster_url"], width=350)
         else:
             st.write("🖼️ No poster")
         st.markdown("</div>", unsafe_allow_html=True)
@@ -332,7 +378,7 @@ elif st.session_state.view == "details":
 
     if data.get("backdrop_url"):
         st.markdown("#### Backdrop")
-        st.image(data["backdrop_url"], use_column_width=True)
+        st.image(data["backdrop_url"])
 
     st.divider()
     st.markdown("### ✅ Recommendations")
